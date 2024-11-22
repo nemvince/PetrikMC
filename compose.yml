@@ -1,0 +1,54 @@
+include:
+  - servers/compose.yml
+
+services:
+  traefik:
+    image: "traefik:v3.2"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    networks:
+      - internal
+  
+  postgres:
+    image: "postgres:16-alpine"
+    networks:
+      - internal
+    env_file: ./bot/.env
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    user: "1000"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: vince@tvk.lol
+      PGADMIN_DEFAULT_PASSWORD: Vince123
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.localhost`)"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+    networks:
+      - internal
+
+  bot:
+    build: ./bot
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bot.rule=Host(`bot.localhost`)"
+      - "traefik.http.services.bot.loadbalancer.server.port=3000"
+    depends_on:
+      - traefik
+      - postgres
+
+networks:
+  internal:

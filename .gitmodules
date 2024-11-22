@@ -1,0 +1,7 @@
+[submodules "PMCBot"]
+  path = bot
+  url = https://github.com/nemvince/PMCBot.git
+
+[submodules "PMCAuth"]
+  path = auth
+  url = https://github.com/nemvince/PMCAuth.git
